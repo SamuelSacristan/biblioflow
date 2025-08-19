@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug Backend (Docker)",
+        "type": "node",
+        "request": "attach",
+        "port": 9229,
+        "address": "localhost",
+        "localRoot": "${workspaceFolder}/back",
+        "remoteRoot": "/usr/src/app",
+        "restart": true,
+        "sourceMaps": true,
+        "outFiles": ["${workspaceFolder}/back/dist/**/*.js"],
+        "skipFiles": ["<node_internals>/**"]
+      },
+      {
+        "name": "Debug Frontend (Chrome)",
+        "type": "chrome",
+        "request": "launch",
+        "url": "http://localhost:4201",
+        "webRoot": "${workspaceFolder}/front/src",
+        "sourceMaps": true
+      }
+    ]
+  }

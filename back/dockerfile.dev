@@ -1,0 +1,21 @@
+FROM node:18-alpine
+
+RUN apk add --no-cache curl
+
+WORKDIR /usr/src/app
+
+RUN npm install -g @nestjs/cli nodemon ts-node
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+EXPOSE 9229
+
+ENV NODE_ENV=development
+ENV DEBUG=*
+
+CMD ["npm", "run", "start:dev"]

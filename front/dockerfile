@@ -1,0 +1,23 @@
+FROM node:18-alpine AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install -g @angular/cli
+
+RUN npm install
+
+COPY . .
+
+RUN rm -rf node_modules && npm install
+
+RUN ng build --configuration production
+
+RUN ls -la /app/dist/
+
+FROM nginx:alpine
+
+COPY --from=build /app/dist/browser/ /usr/share/nginx/html/
+
+EXPOSE 80

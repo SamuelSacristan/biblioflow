@@ -1,0 +1,59 @@
+-- Création de la base de données (avec gestion des erreurs)
+SELECT 'CREATE DATABASE biblioflow' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'biblioflow')\gexec
+
+-- Connexion à la base biblioflow
+\c biblioflow;
+
+-- Table des utilisateurs (avec IF NOT EXISTS)
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des tâches/livres (avec IF NOT EXISTS)
+CREATE TABLE IF NOT EXISTS tasks (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    user_id INTEGER REFERENCES users(id),
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insertion de données de test (avec vérification)
+INSERT INTO users (email, password, name) 
+SELECT 'admin@biblioflow.com', 'hashed_password_123', 'Admin User'
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'admin@biblioflow.com');
+
+INSERT INTO users (email, password, name) 
+SELECT 'user@biblioflow.com', 'hashed_password_456', 'Regular User'
+WHERE NOT EXISTS (SELECT 1 FROM users WHERE email = 'user@biblioflow.com');
+
+INSERT INTO tasks (title, description, user_id, status)
+SELECT 'Lire "Le Petit Prince"', 'Terminer la lecture avant vendredi', 1, 'in_progress'
+WHERE NOT EXISTS (SELECT 1 FROM tasks WHERE title = 'Lire "Le Petit Prince"');
+
+INSERT INTO tasks (title, description, user_id, status)
+SELECT 'Acheter livre JavaScript', 'Chercher un bon livre sur Node.js', 2, 'pending'
+WHERE NOT EXISTS (SELECT 1 FROM tasks WHERE title = 'Acheter livre JavaScript');
+
+INSERT INTO tasks (title, description, user_id, status)
+SELECT 'Rendre livre bibliothèque', 'Retourner "1984" avant la date limite', 1, 'completed'
+WHERE NOT EXISTS (SELECT 1 FROM tasks WHERE title = 'Rendre livre bibliothèque');
+
+-- Création d'un utilisateur pour l'application (avec gestion des erreurs)
+DO $
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_user WHERE usename = 'app_user') THEN
+        CREATE USER app_user WITH PASSWORD 'app_password_123';
+    END IF;
+END
+$;
+
+GRANT ALL PRIVILEGES ON DATABASE biblioflow TO app_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO app_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO app_user;
