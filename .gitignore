@@ -262,3 +262,7 @@ public/
 # Temporary folders
 tmp/
 temp/
+.vscode/launch.json
+front/.vscode/extensions.json
+front/.vscode/launch.json
+front/.vscode/tasks.json
