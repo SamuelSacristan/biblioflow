@@ -6,11 +6,9 @@ COPY package*.json ./
 
 RUN npm install -g @angular/cli
 
-RUN npm install
+RUN npm ci
 
 COPY . .
-
-RUN rm -rf node_modules && npm install
 
 RUN ng build --configuration production
 
