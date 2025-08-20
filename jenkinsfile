@@ -64,11 +64,11 @@ pipeline {
                 script {
                     // Build backend image
                     def backendImage = docker.build("biblioflow/backend:${env.BUILD_NUMBER}", "./back")
-                    backendImage.tag("biblioflow/backend:latest")
+                    backendImage.tag("latest")
                     
                     // Build frontend image  
                     def frontendImage = docker.build("biblioflow/frontend:${env.BUILD_NUMBER}", "./front")
-                    frontendImage.tag("biblioflow/frontend:latest")
+                    frontendImage.tag("latest")
                     
                     echo "✅ Images créées avec succès !"
                 }
