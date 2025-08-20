@@ -20,12 +20,16 @@ export class BooksController {
 
   @Get('health')
   getHealth(): object {
-    return { status: 'ok', timestamp: new Date().toISOString() };
+    return {
+      status: 'HOT RELOAD WORKS!',
+      timestamp: new Date().toISOString(),
+      message: 'Backend mise à jour automatique !',
+    };
   }
 
-  @Get()
+  @Get('hello')
   getHello(): string {
-    return 'hot reload ?';
+    return 'hot reload works!';
   }
 
   @Post()

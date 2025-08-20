@@ -90,6 +90,34 @@ dev_status() {
     docker-compose -f docker-compose.dev.yml ps
 }
 
+dev_watch() {
+    if [ -z "$1" ]; then
+        log_info "Surveillance de tous les services..."
+        docker-compose -f docker-compose.dev.yml logs -f --tail=50
+    else
+        log_info "Surveillance du service $1..."
+        docker-compose -f docker-compose.dev.yml logs -f --tail=50 "$1"
+    fi
+}
+
+dev_rebuild() {
+    if [ -z "$1" ]; then
+        log_error "Veuillez spécifier un service (backend, frontend)"
+        return 1
+    fi
+    
+    log_info "Reconstruction du service $1..."
+    docker-compose -f docker-compose.dev.yml up --build -d "$1"
+    log_success "Service $1 reconstruit !"
+}
+
+dev_health() {
+    log_info "Vérification de la santé des services..."
+    echo "Backend: $(curl -s http://localhost:3001/books/health | jq -r '.status' 2>/dev/null || echo 'Indisponible')"
+    echo "Frontend: $(curl -s http://localhost:4201 >/dev/null && echo 'OK' || echo 'Indisponible')"
+    echo "Nginx: $(curl -s http://localhost:8080/health || echo 'Indisponible')"
+}
+
 case "$1" in
     "start")
         dev_start
@@ -102,6 +130,15 @@ case "$1" in
         ;;
     "logs")
         dev_logs "$2"
+        ;;
+    "watch")
+        dev_watch "$2"
+        ;;
+    "rebuild")
+        dev_rebuild "$2"
+        ;;
+    "health")
+        dev_health
         ;;
     "exec")
         service="$2"
@@ -118,13 +155,16 @@ case "$1" in
         dev_status
         ;;
     *)
-        echo "Usage: $0 {start|stop|restart|logs|exec|install|clean|status}"
+        echo "Usage: $0 {start|stop|restart|logs|watch|rebuild|health|exec|install|clean|status}"
         echo ""
         echo "Commandes disponibles:"
         echo "  start                    - Démarre l'environnement de développement"
         echo "  stop                     - Arrête l'environnement de développement"
         echo "  restart <service>        - Redémarre un service spécifique"
         echo "  logs [service]           - Affiche les logs (tous ou d'un service)"
+        echo "  watch [service]          - Surveillance en temps réel des logs"
+        echo "  rebuild <service>        - Reconstruit un service spécifique"
+        echo "  health                   - Vérifie la santé des services"
         echo "  exec <service> <cmd>     - Exécute une commande dans un conteneur"
         echo "  install <backend|frontend> - Installe les dépendances"
         echo "  clean                    - Nettoie l'environnement"
@@ -132,8 +172,8 @@ case "$1" in
         echo ""
         echo "Exemples:"
         echo "  $0 start"
-        echo "  $0 logs backend"
-        echo "  $0 exec backend npm run test"
-        echo "  $0 install frontend"
+        echo "  $0 watch backend"
+        echo "  $0 rebuild frontend"
+        echo "  $0 health"
         exit 1
 esac
