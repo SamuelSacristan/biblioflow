@@ -25,8 +25,7 @@ pipeline {
                 script {
                     // Vérification des fichiers requis
                     def requiredFiles = [
-                        'docker-compose.yml',
-                        'compose.ci.yml', 
+                        'compose.ci.yml',  // Seulement le fichier CI
                         'back/package.json',
                         'front/package.json'
                     ]
@@ -42,9 +41,9 @@ pipeline {
                     sh 'docker --version'
                     sh 'docker-compose --version'
                     
-                    // Nettoyage préventif avec variables explicites
+                    // Nettoyage préventif - SEULEMENT CI
                     sh '''
-                        echo "🧹 Nettoyage des conteneurs existants..."
+                        echo "🧹 Nettoyage des conteneurs CI existants..."
                         export POSTGRES_DB=biblioflow_ci
                         export POSTGRES_USER=postgres
                         export POSTGRES_PASSWORD=postgres123
@@ -57,7 +56,7 @@ pipeline {
                         export PORT=3000
                         export LOG_LEVEL=info
                         
-                        docker-compose -f docker-compose.yml -f compose.ci.yml down --remove-orphans || true
+                        docker-compose -f compose.ci.yml down --remove-orphans || true
                         docker system prune -f || true
                     '''
                 }
@@ -104,16 +103,10 @@ LOG_LEVEL=info
                 echo '🏗️ Construction des images et services...'
                 script {
                     try {
-                        // Détection automatique des overrides
-                        def composeFiles = '-f docker-compose.yml -f compose.ci.yml'
+                        // Utilisation SEULEMENT du fichier CI
+                        echo "✅ Utilisation de compose.ci.yml uniquement"
                         
-                        if (fileExists('compose.ci.yml')) {
-                            echo "✅ Override CI détecté: compose.ci.yml"
-                        } else {
-                            error "❌ Fichier compose.ci.yml requis pour la CI"
-                        }
-                        
-                        // Build des images avec variables explicites (pas de source)
+                        // Build des images avec variables explicites
                         sh """
                             echo "🐳 Build des images Docker..."
                             
@@ -131,7 +124,7 @@ LOG_LEVEL=info
                             export LOG_LEVEL=info
                             export CI=true
                             
-                            docker-compose ${composeFiles} build --no-cache
+                            docker-compose -f compose.ci.yml build --no-cache
                             
                             echo "📋 Vérification des images créées..."
                             docker images | grep biblioflow || echo "Images en cours de création..."
@@ -160,8 +153,7 @@ LOG_LEVEL=info
                         export PORT=3000
                         export LOG_LEVEL=info
                         
-                        docker-compose -f docker-compose.yml -f compose.ci.yml down --remove-orphans || true
-                        docker system prune -f || true
+                        docker-compose -f compose.ci.yml down --remove-orphans || true
                     '''
                 }
             }
@@ -172,9 +164,9 @@ LOG_LEVEL=info
                 echo '🚀 Déploiement des services...'
                 script {
                     try {
-                        // Stop des services existants
+                        // Stop des services existants - SEULEMENT CI
                         sh '''
-                            echo "🛑 Arrêt des services existants..."
+                            echo "🛑 Arrêt des services CI existants..."
                             export POSTGRES_DB=biblioflow_ci
                             export POSTGRES_USER=postgres
                             export POSTGRES_PASSWORD=postgres123
@@ -187,12 +179,12 @@ LOG_LEVEL=info
                             export PORT=3000
                             export LOG_LEVEL=info
                             
-                            docker-compose -f docker-compose.yml -f compose.ci.yml down --remove-orphans || true
+                            docker-compose -f compose.ci.yml down --remove-orphans || true
                         '''
                         
-                        // Démarrage avec force-recreate
+                        // Démarrage avec force-recreate - SEULEMENT CI
                         sh '''
-                            echo "🚀 Démarrage des services avec --force-recreate..."
+                            echo "🚀 Démarrage des services CI avec --force-recreate..."
                             export POSTGRES_DB=biblioflow_ci
                             export POSTGRES_USER=postgres
                             export POSTGRES_PASSWORD=postgres123
@@ -205,7 +197,7 @@ LOG_LEVEL=info
                             export PORT=3000
                             export LOG_LEVEL=info
                             
-                            docker-compose -f docker-compose.yml -f compose.ci.yml up -d --force-recreate
+                            docker-compose -f compose.ci.yml up -d --force-recreate
                         '''
                         
                         // Attente que les services soient prêts
@@ -226,7 +218,7 @@ LOG_LEVEL=info
                             export PORT=3000
                             export LOG_LEVEL=info
                             
-                            docker-compose -f docker-compose.yml -f compose.ci.yml ps
+                            docker-compose -f compose.ci.yml ps
                         '''
                         
                     } catch (Exception e) {
@@ -253,10 +245,10 @@ LOG_LEVEL=info
                         export PORT=3000
                         export LOG_LEVEL=info
                         
-                        docker-compose -f docker-compose.yml -f compose.ci.yml logs || true
+                        docker-compose -f compose.ci.yml logs || true
                         
                         echo "🧹 Nettoyage après échec..."
-                        docker-compose -f docker-compose.yml -f compose.ci.yml down --remove-orphans || true
+                        docker-compose -f compose.ci.yml down --remove-orphans || true
                     '''
                 }
             }
@@ -269,17 +261,17 @@ LOG_LEVEL=info
                     try {
                         // Tests de santé
                         sh '''
-                            echo "🔍 Vérification de l'accessibilité des services..."
+                            echo "🔍 Vérification de l'accessibilité des services CI..."
                             
                             # Test Frontend (nginx sur port 80 dans le conteneur, mappé sur 4202)
-                            echo "Testing frontend..."
-                            curl -f http://localhost:4202/ || echo "Frontend non accessible"
+                            echo "Testing frontend CI..."
+                            curl -f http://localhost:4202/ || echo "Frontend CI non accessible sur port 4202"
                             
                             # Test Backend (port 3000 dans le conteneur, mappé sur 3002)
-                            echo "Testing backend..."
-                            curl -f http://localhost:3002/books/health || echo "Backend non accessible"
+                            echo "Testing backend CI..."
+                            curl -f http://localhost:3002/books/health || echo "Backend CI non accessible sur port 3002"
                             
-                            echo "📊 État final des conteneurs:"
+                            echo "📊 État final des conteneurs CI:"
                             export POSTGRES_DB=biblioflow_ci
                             export POSTGRES_USER=postgres
                             export POSTGRES_PASSWORD=postgres123
@@ -292,12 +284,12 @@ LOG_LEVEL=info
                             export PORT=3000
                             export LOG_LEVEL=info
                             
-                            docker-compose -f docker-compose.yml -f compose.ci.yml ps
+                            docker-compose -f compose.ci.yml ps
                         '''
                         
                         // Vérification bases de données
                         sh '''
-                            echo "🗄️ Vérification des bases de données..."
+                            echo "🗄️ Vérification des bases de données CI..."
                             
                             export POSTGRES_DB=biblioflow_ci
                             export POSTGRES_USER=postgres
@@ -312,10 +304,10 @@ LOG_LEVEL=info
                             export LOG_LEVEL=info
                             
                             # Test PostgreSQL
-                            docker-compose -f docker-compose.yml -f compose.ci.yml exec -T postgres pg_isready -U postgres -d biblioflow_ci || echo "PostgreSQL non prêt"
+                            docker-compose -f compose.ci.yml exec -T postgres pg_isready -U postgres -d biblioflow_ci || echo "PostgreSQL CI non prêt"
                             
-                            # Test MongoDB
-                            docker-compose -f docker-compose.yml -f compose.ci.yml exec -T mongo mongosh --eval "db.adminCommand('ping')" || echo "MongoDB non prêt"
+                            # Test MongoDB  
+                            docker-compose -f compose.ci.yml exec -T mongo mongosh --eval "db.adminCommand('ping')" || echo "MongoDB CI non prêt"
                         '''
                         
                         echo "✅ Validation terminée avec succès !"
@@ -348,7 +340,7 @@ LOG_LEVEL=info
                     export PORT=3000
                     export LOG_LEVEL=info
                     
-                    docker-compose -f docker-compose.yml -f compose.ci.yml ps || true
+                    docker-compose -f compose.ci.yml ps || true
                     docker images | grep biblioflow || echo "Aucune image biblioflow"
                 '''
                 
