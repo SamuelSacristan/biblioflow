@@ -96,6 +96,23 @@ services:
       - "dev.environment=development"
       - "dev.service=proxy"
 
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: biblioflow-jenkins
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: root
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=true
+    labels:
+      - "dev.environment=development"
+      - "dev.service=jenkins"
+
 volumes:
   postgres_dev_data:
     driver: local
@@ -105,6 +122,10 @@ volumes:
     driver: local
     labels:
       - "dev.data=mongo"
+  jenkins_data:
+    driver: local
+    labels:
+      - "dev.data=jenkins"
 
 networks:
   default:
