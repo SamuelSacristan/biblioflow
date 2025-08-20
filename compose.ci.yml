@@ -8,8 +8,6 @@ services:
     volumes:
       - postgres_ci_data:/var/lib/postgresql/data
       - ./database/postgres-init:/docker-entrypoint-initdb.d
-    ports:
-      - "5435:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-biblioflow_ci}"]
       interval: 5s
@@ -24,8 +22,6 @@ services:
     volumes:
       - mongo_ci_data:/data/db
       - ./database/mongo-init:/docker-entrypoint-initdb.d
-    ports:
-      - "27020:27017"
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 5s
