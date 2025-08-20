@@ -43,8 +43,6 @@ services:
         condition: service_healthy
       mongo:
         condition: service_healthy
-    ports:
-      - "3002:3000"
     restart: "no"
     labels:
       - "ci.environment=testing"
@@ -56,8 +54,6 @@ services:
       dockerfile: dockerfile
     depends_on:
       - backend
-    ports:
-      - "4202:80"
     restart: "no"
     labels:
       - "ci.environment=testing"
