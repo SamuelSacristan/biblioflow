@@ -1,0 +1,264 @@
+
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# Package locks (gérés par Docker)
+package-lock.json
+*/package-lock.json
+**/package-lock.json
+yarn.lock
+*/yarn.lock
+**/yarn.lock
+
+# npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ========================================
+# 🏗️  BUILD & DIST
+# ========================================
+
+# Compiled output
+/dist
+/build
+/out-tsc
+/bazel-out
+*/dist/
+*/build/
+*/out-tsc/
+**/dist/
+**/build/
+
+# Backend builds
+back/dist/
+back/build/
+
+# Frontend builds
+front/dist/
+front/out-tsc/
+
+# ========================================
+# 🧪 TESTS & COVERAGE
+# ========================================
+
+# Test results
+/coverage
+/.nyc_output
+*/coverage/
+**/coverage/
+/libpeerconnection.log
+testem.log
+/typings
+
+# Jest
+*.test.js
+*.spec.js
+coverage/
+
+# ========================================
+# 🔧 DEVELOPMENT & IDE
+# ========================================
+
+# VSCode (garder seulement config partagée)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# IDEs
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# ========================================
+# 🌍 ENVIRONMENT & CONFIG
+# ========================================
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.dev
+.env.*.local
+
+# ========================================
+# 📊 LOGS & MONITORING
+# ========================================
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Application logs
+/logs
+back/logs/
+front/logs/
+
+# ========================================
+# 🐳 DOCKER & INFRASTRUCTURE
+# ========================================
+
+# Docker volumes data
+*_data/
+postgres_dev_data/
+mongo_dev_data/
+
+# Docker override files
+docker-compose.override.yml
+
+# ========================================
+# 🖥️  SYSTEM & OS
+# ========================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+
+# Linux
+*~
+.nfs*
+
+# ========================================
+# 🎯 ANGULAR SPECIFIC
+# ========================================
+
+# Angular
+/.angular/cache
+.sass-cache/
+/connect.lock
+front/.angular/
+
+# ========================================
+# 🚀 NESTJS SPECIFIC
+# ========================================
+
+# NestJS
+back/dist/
+back/.nest/
+
+# ========================================
+# 📁 PROJECT SPECIFIC
+# ========================================
+
+# Backups
+*.backup
+*.bak
+docker-compose.*.backup
+
+# Temporary test files
+/tmp/
+.tmp/
+test-results/
+
+# Database dumps
+*.sql
+*.dump
+
+# SSL certificates (if any)
+*.pem
+*.key
+*.crt
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output/
+
+# Grunt intermediate storage
+.grunt/
+
+# Bower dependency directory
+bower_components/
+
+# Compiled binary addons
+build/Release/
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm/
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.cache/
+.parcel-cache/
+
+# Next.js build output
+.next/
+
+# Nuxt.js build / generate output
+.nuxt/
+
+# Gatsby files
+.cache/
+public/
+
+# Storybook build outputs
+.out/
+.storybook-out/
+
+# Temporary folders
+tmp/
+temp/
