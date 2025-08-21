@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { BookListComponent } from './components/book-list/book-list.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  standalone: true,
+  imports: [BookListComponent],
+  template: `<app-book-list></app-book-list>`
 })
 export class AppComponent {
-  title = 'front';
+  title = 'BiblioFlow - Gestion de Livres';
 }
