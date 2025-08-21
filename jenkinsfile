@@ -7,6 +7,7 @@ pipeline {
     
     environment {
         COMPOSE_PROJECT_NAME = "biblioflow_ci_${BUILD_NUMBER}"
+        SONAR_SCANNER_HOME = tool 'SonarScanner'
     }
     
     stages {
@@ -23,11 +24,11 @@ pipeline {
             steps {
                 echo '🔍 Vérifications préliminaires...'
                 script {
-                    // Vérification des fichiers requis
                     def requiredFiles = [
-                        'compose.ci.yml',  // Seulement le fichier CI
+                        'compose.ci.yml',
                         'back/package.json',
-                        'front/package.json'
+                        'front/package.json',
+                        'sonar-project.properties'
                     ]
                     
                     for (file in requiredFiles) {
@@ -37,11 +38,9 @@ pipeline {
                         echo "✅ Fichier trouvé: ${file}"
                     }
                     
-                    // Vérification Docker
                     sh 'docker --version'
                     sh 'docker-compose --version'
                     
-                    // Nettoyage préventif - SEULEMENT CI
                     sh '''
                         echo "🧹 Nettoyage des conteneurs CI existants..."
                         export POSTGRES_DB=biblioflow_ci
@@ -67,7 +66,6 @@ pipeline {
             steps {
                 echo '⚙️ Préparation des fichiers d\'environnement...'
                 script {
-                    // Création du fichier .env pour la CI
                     writeFile file: '.env.ci', text: '''
 # Configuration CI/CD
 NODE_ENV=production
@@ -98,15 +96,87 @@ LOG_LEVEL=info
             }
         }
         
+        stage('Debug SonarScanner') {
+            when {
+                expression { params.DEBUG_SONAR == true }
+            }
+            steps {
+                echo '🐛 Debug SonarScanner (optionnel)...'
+                script {
+                    sh '''
+                        echo "=== Debug SonarQube ==="
+                        echo "SONAR_SCANNER_HOME: ${SONAR_SCANNER_HOME}"
+                        echo "Workspace: ${WORKSPACE}"
+                        echo "Build number: ${BUILD_NUMBER}"
+                        
+                        echo "=== Configuration SonarQube ==="
+                        if [ -f "sonar-project.properties" ]; then
+                            cat sonar-project.properties
+                        else
+                            echo "❌ Fichier sonar-project.properties non trouvé"
+                        fi
+                        
+                        echo "=== Test de connectivité SonarQube ==="
+                        curl -f http://sonarqube:9000/api/system/status || echo "SonarQube non accessible"
+                    '''
+                }
+            }
+        }
+        
+        stage('SonarQube Analysis') {
+            steps {
+                echo '📊 Analyse SonarQube...'
+                script {
+                    if (!fileExists('sonar-project.properties')) {
+                        error '❌ Fichier sonar-project.properties manquant'
+                    }
+                    
+                    withSonarQubeEnv('SonarQubeLocal') {
+                        sh '''
+                            echo "🔍 Démarrage de l'analyse SonarQube..."
+                            
+                            # Utilisation du SonarQube Scanner
+                            ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                                -Dsonar.projectKey=biblioflow-project \
+                                -Dsonar.projectName=Biblioflow \
+                                -Dsonar.projectVersion=${BUILD_NUMBER} \
+                                -Dsonar.sources=back/src,front/src \
+                                -Dsonar.exclusions="**/node_modules/**,**/dist/**,**/coverage/**,**/*.spec.ts,**/*.test.ts" \
+                                -Dsonar.host.url=http://sonarqube:9000
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Quality Gate') {
+            steps {
+                echo '🚪 Vérification du Quality Gate...'
+                script {
+                    timeout(time: 5, unit: 'MINUTES') {
+                        def qg = waitForQualityGate()
+                        if (qg.status != 'OK') {
+                            echo "❌ Quality Gate échoué: ${qg.status}"
+                            echo "Détails:"
+                            echo "  - Status: ${qg.status}"
+                            
+                            currentBuild.result = 'UNSTABLE'
+                            echo "⚠️ Pipeline marqué comme UNSTABLE à cause du Quality Gate"
+                        } else {
+                            echo "✅ Quality Gate réussi !"
+                        }
+                    }
+                }
+            }
+        }
+        
         stage('Build') {
             steps {
                 echo '🏗️ Construction des images et services...'
                 script {
                     try {
-                        // Utilisation SEULEMENT du fichier CI
                         echo "✅ Utilisation de compose.ci.yml uniquement"
                         
-                        // Build des images avec variables explicites
                         sh """
                             echo "🐳 Build des images Docker..."
                             
@@ -164,7 +234,6 @@ LOG_LEVEL=info
                 echo '🚀 Déploiement des services...'
                 script {
                     try {
-                        // Stop des services existants - SEULEMENT CI
                         sh '''
                             echo "🛑 Arrêt des services CI existants..."
                             export POSTGRES_DB=biblioflow_ci
@@ -182,7 +251,6 @@ LOG_LEVEL=info
                             docker-compose -f compose.ci.yml down --remove-orphans || true
                         '''
                         
-                        // Démarrage avec force-recreate - SEULEMENT CI
                         sh '''
                             echo "🚀 Démarrage des services CI avec --force-recreate..."
                             export POSTGRES_DB=biblioflow_ci
@@ -200,7 +268,6 @@ LOG_LEVEL=info
                             docker-compose -f compose.ci.yml up -d --force-recreate
                         '''
                         
-                        // Attente que les services soient prêts
                         sh '''
                             echo "⏳ Attente que les services soient prêts..."
                             sleep 30
@@ -259,7 +326,6 @@ LOG_LEVEL=info
                 echo '✅ Validation du déploiement...'
                 script {
                     try {
-                        // Tests de santé
                         sh '''
                             echo "🔍 Vérification de l'accessibilité des services CI..."
                             
@@ -287,7 +353,6 @@ LOG_LEVEL=info
                             docker-compose -f compose.ci.yml ps
                         '''
                         
-                        // Vérification bases de données
                         sh '''
                             echo "🗄️ Vérification des bases de données CI..."
                             
@@ -325,7 +390,6 @@ LOG_LEVEL=info
         always {
             echo '🧹 Nettoyage final...'
             script {
-                // Collecte des informations finales
                 sh '''
                     echo "📊 Résumé final:"
                     export POSTGRES_DB=biblioflow_ci
@@ -344,32 +408,31 @@ LOG_LEVEL=info
                     docker images | grep biblioflow || echo "Aucune image biblioflow"
                 '''
                 
-                // Nettoyage des volumes de test uniquement
                 sh '''
                     echo "🧹 Nettoyage des volumes CI..."
                     docker volume ls | grep ci || echo "Aucun volume CI à nettoyer"
                 '''
             }
             
-            // Nettoyage workspace Jenkins
             cleanWs()
         }
         
         success {
-            echo '🎉 Pipeline TP9 terminé avec succès !'
-            echo '✅ Critères d\'évaluation:'
-            echo '   • 40% Pipeline fonctionnel ✅'
-            echo '   • 30% Best practices (volumes, .env, overrides) ✅'
-            echo '   • 30% Robustesse (gestion erreurs) ✅'
+            echo '🎉 Pipeline TP11 terminé avec succès !'
+            echo '✅ Critères d\'évaluation TP11:'
+            echo '   • Analyse SonarQube intégrée ✅'
+            echo '   • Quality Gate vérifié ✅'
+            echo '   • Pipeline build → analyse → déploiement ✅'
         }
         
         failure {
-            echo '❌ Pipeline TP9 échoué !'
+            echo '❌ Pipeline TP11 échoué !'
             echo 'Vérifiez les logs ci-dessus pour identifier les problèmes.'
         }
         
         unstable {
-            echo '⚠️ Pipeline TP9 instable - certains tests ont échoué'
+            echo '⚠️ Pipeline TP11 instable - Quality Gate échoué mais build/deploy réussi'
+            echo 'Consultez SonarQube pour améliorer la qualité du code.'
         }
     }
 }

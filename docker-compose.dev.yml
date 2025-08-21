@@ -127,6 +127,42 @@ services:
       - "dev.environment=development"
       - "dev.service=jenkins"
 
+  sonarqube:
+    image: sonarqube:10-community
+    container_name: biblioflow-sonarqube
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://sonarqube_db:5432/sonar
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=sonar123
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    depends_on:
+      - sonarqube_db
+    labels:
+      - "dev.environment=development"
+      - "dev.service=sonarqube"
+
+  sonarqube_db:
+    image: postgres:15-alpine
+    container_name: biblioflow-sonarqube-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar123
+      POSTGRES_DB: sonar
+    volumes:
+      - sonarqube_postgresql:/var/lib/postgresql
+      - sonarqube_postgresql_data:/var/lib/postgresql/data
+    labels:
+      - "dev.environment=development"
+      - "dev.service=sonarqube-db"
+
 volumes:
   postgres_dev_data:
     driver: local
@@ -140,6 +176,11 @@ volumes:
     driver: local
     labels:
       - "dev.data=jenkins"
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+  sonarqube_postgresql:
+  sonarqube_postgresql_data:
 
 networks:
   default:
