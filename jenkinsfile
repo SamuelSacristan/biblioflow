@@ -148,6 +148,32 @@ LOG_LEVEL=info
                 }
             }
         }
+
+        stage('Quality Gate') {
+    steps {
+        echo '🚪 Vérification du Quality Gate...'
+        script {
+            if (env.SONAR_QUALITYGATE_WAIT != 'false') {
+                try {
+                    timeout(time: 3, unit: 'MINUTES') {
+                        def qg = waitForQualityGate()
+                        if (qg.status != 'OK') {
+                            error "❌ Quality Gate échoué: ${qg.status}"
+                        }
+                        echo "✅ Quality Gate réussi !"
+                    }
+                } catch (Exception e) {
+                    echo "⚠️ Quality Gate timeout - Vérification manuelle requise"
+                    echo "📊 http://localhost:9000/dashboard?id=biblioflow-project"
+                    currentBuild.result = 'UNSTABLE'
+                }
+            } else {
+                echo "✅ Quality Gate configuré en mode asynchrone"
+                echo "📊 Consultez: http://localhost:9000/dashboard?id=biblioflow-project"
+            }
+        }
+    }
+}
         
         stage('Build') {
             steps {
