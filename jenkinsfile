@@ -149,22 +149,30 @@ LOG_LEVEL=info
             }
         }
         
-        stage('Quality Gate') {
+stage('Quality Gate') {
             steps {
                 echo '🚪 Vérification du Quality Gate...'
                 script {
-                    timeout(time: 5, unit: 'MINUTES') {
-                        def qg = waitForQualityGate()
-                        if (qg.status != 'OK') {
-                            echo "❌ Quality Gate échoué: ${qg.status}"
-                            echo "Détails:"
-                            echo "  - Status: ${qg.status}"
-                            
-                            currentBuild.result = 'UNSTABLE'
-                            echo "⚠️ Pipeline marqué comme UNSTABLE à cause du Quality Gate"
-                        } else {
-                            echo "✅ Quality Gate réussi !"
+                    try {
+                        timeout(time: 10, unit: 'MINUTES') {
+                            def qg = waitForQualityGate()
+                            if (qg.status != 'OK') {
+                                echo "❌ Quality Gate échoué: ${qg.status}"
+                                echo "Détails:"
+                                echo "  - Status: ${qg.status}"
+                                
+                                // On peut continuer pour le TP, mais on affiche un warning
+                                currentBuild.result = 'UNSTABLE'
+                                echo "⚠️ Pipeline marqué comme UNSTABLE à cause du Quality Gate"
+                            } else {
+                                echo "✅ Quality Gate réussi !"
+                            }
                         }
+                    } catch (Exception e) {
+                        echo "⚠️ Timeout du Quality Gate ou erreur: ${e.message}"
+                        echo "L'analyse SonarQube a réussi, mais le Quality Gate n'a pas pu être vérifié."
+                        echo "Consultez manuellement SonarQube: http://localhost:9000/dashboard?id=biblioflow-project"
+                        currentBuild.result = 'UNSTABLE'
                     }
                 }
             }

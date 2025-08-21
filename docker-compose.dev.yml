@@ -111,7 +111,7 @@ services:
       - "dev.service=proxy"
 
   jenkins:
-    image: jenkins/jenkins:lts
+    image: jenkins/jenkins:lts-jdk17
     container_name: biblioflow-jenkins-dev
     restart: unless-stopped
     ports:
@@ -122,7 +122,14 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     user: root
     environment:
-      - JAVA_OPTS=-Djenkins.install.runSetupWizard=true
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+    entrypoint: >
+      bash -c "
+        apt-get update &&
+        apt-get install -y docker.io docker-compose &&
+        usermod -aG docker jenkins &&
+        /usr/local/bin/jenkins.sh
+      "
     labels:
       - "dev.environment=development"
       - "dev.service=jenkins"
